@@ -1,0 +1,132 @@
+java.lang.IndexOutOfBoundsException: -1 is out of bounds (min 0, max 2)
+occurred in the presentation compiler.
+
+action parameters:
+offset: 1866
+uri: file://<WORKSPACE>/app/models/repo/AccountRepo.scala
+text:
+package models.repo
+
+import scala.concurrent.ExecutionContext
+import javax.inject._
+import play.api.db.slick.DatabaseConfigProvider
+import play.api.db.slick.HasDatabaseConfigProvider
+import slick.jdbc.JdbcProfile
+import models.domain.Account
+import java.util.UUID
+import scala.concurrent.Future
+
+trait AccountRepository {
+    def createAcc(account: Account): Future[Int]
+    def findAcc(id: UUID): Future[Option[Account]]
+    def getAcc(email: String): Future[Seq[Account]]
+    def deleteAcc(id: UUID): Future[Int]
+    def updateAcc(id: UUID, newEmail: String): Future[Int]
+}
+
+@Singleton
+final class AccountRepo @Inject()
+(protected val dbConfigProvider: DatabaseConfigProvider)
+(implicit ex: ExecutionContext) 
+extends HasDatabaseConfigProvider[JdbcProfile] 
+with AccountRepository {
+    import profile.api._
+
+    protected class Accounts (tag: Tag) extends Table[Account](tag, "ACCOUNTS") {
+        def id = column[UUID]("ID", O.PrimaryKey)
+        def email = column[String]("EMAIL")
+
+        // def * = (id, email) <> (Account.tupled, Account.unapply)
+        def * = (id, email).mapTo[Account]
+    }
+    val accounts = TableQuery[Accounts]
+
+    def createSchema = db.run(accounts.schema.createIfNotExists)
+    override def createAcc(account: Account): Future[Int] = db.run(accounts += account)
+    override def findAcc(id: UUID): Future[Option[Account]] = db.run(accounts.filter(_.id === id).result.headOption)
+    //override def getAcc(email: String): Future[Seq[Account]] = db.run(accounts.filter(_.email like s"%$email%").result)
+    override def getAcc(email: String): Future[Seq[Account]] = db.run(accounts.filter(_.email.like(s"%$email%")).result)
+    override def deleteAcc(id: UUID): Future[Int] = db.run(accounts.filter(_.id === id).delete)
+    override def updateAcc(id: UUID, newEmail: String): Future[Int] = db.run(accounts.filter(_.id === id).map(a@@))
+
+    def getAll(): Future[Seq[Account]] = db.run(accounts.result)
+}
+
+
+error stacktrace:
+scala.collection.mutable.ArrayBuffer.apply(ArrayBuffer.scala:106)
+	scala.reflect.internal.Types$Type.findMemberInternal$1(Types.scala:1030)
+	scala.reflect.internal.Types$Type.findMember(Types.scala:1035)
+	scala.reflect.internal.Types$Type.memberBasedOnName(Types.scala:661)
+	scala.reflect.internal.Types$Type.member(Types.scala:625)
+	scala.tools.nsc.typechecker.Contexts$SymbolLookup.apply(Contexts.scala:1435)
+	scala.tools.nsc.typechecker.Contexts$Context.lookupSymbol(Contexts.scala:1286)
+	scala.tools.nsc.typechecker.Typers$Typer.typedIdent$2(Typers.scala:5572)
+	scala.tools.nsc.typechecker.Typers$Typer.typedIdentOrWildcard$1(Typers.scala:5631)
+	scala.tools.nsc.typechecker.Typers$Typer.typed1(Typers.scala:6095)
+	scala.tools.nsc.typechecker.Typers$Typer.typed(Typers.scala:6153)
+	scala.tools.nsc.typechecker.Typers$Typer.typedType(Typers.scala:6337)
+	scala.tools.nsc.typechecker.Typers$Typer.typedHigherKindedType(Typers.scala:6344)
+	scala.tools.nsc.typechecker.Typers$Typer.$anonfun$typed1$80(Typers.scala:5680)
+	scala.tools.nsc.typechecker.Typers$Typer.typedAppliedTypeTree$1(Typers.scala:5669)
+	scala.tools.nsc.typechecker.Typers$Typer.typed1(Typers.scala:6047)
+	scala.tools.nsc.typechecker.Typers$Typer.typed(Typers.scala:6153)
+	scala.tools.nsc.typechecker.Typers$Typer.typedType(Typers.scala:6337)
+	scala.tools.nsc.typechecker.Typers$Typer.typedType(Typers.scala:6340)
+	scala.tools.nsc.typechecker.Namers$Namer.methodSig(Namers.scala:1392)
+	scala.tools.nsc.typechecker.Namers$Namer.memberSig(Namers.scala:1975)
+	scala.tools.nsc.typechecker.Namers$Namer.typeSig(Namers.scala:1926)
+	scala.tools.nsc.typechecker.Namers$Namer$MonoTypeCompleter.completeImpl(Namers.scala:874)
+	scala.tools.nsc.typechecker.Namers$LockingTypeCompleter.complete(Namers.scala:2123)
+	scala.tools.nsc.typechecker.Namers$LockingTypeCompleter.complete$(Namers.scala:2121)
+	scala.tools.nsc.typechecker.Namers$TypeCompleterBase.complete(Namers.scala:2116)
+	scala.reflect.internal.Symbols$Symbol.completeInfo(Symbols.scala:1565)
+	scala.reflect.internal.Symbols$Symbol.info(Symbols.scala:1537)
+	scala.reflect.internal.Symbols$Symbol.tpeHK(Symbols.scala:1491)
+	scala.reflect.internal.Types$Type.computeMemberType(Types.scala:724)
+	scala.reflect.internal.Symbols$MethodSymbol.typeAsMemberOf(Symbols.scala:3081)
+	scala.reflect.internal.Types$Type.memberType(Types.scala:719)
+	scala.reflect.internal.Symbols$Symbol.qualifies$1(Symbols.scala:2420)
+	scala.reflect.internal.Symbols$Symbol.matchingSymbolInternal(Symbols.scala:2424)
+	scala.reflect.internal.Symbols$Symbol.matchingSymbol(Symbols.scala:2413)
+	scala.reflect.internal.Symbols$Symbol.matchingInheritedSymbolIn(Symbols.scala:2440)
+	scala.reflect.internal.Symbols$Symbol.overriddenSymbol(Symbols.scala:2435)
+	scala.reflect.internal.Symbols$Symbol.$anonfun$computeIsOverridingSymbol$1(Symbols.scala:2489)
+	scala.reflect.internal.Symbols$Symbol.computeIsOverridingSymbol(Symbols.scala:2489)
+	scala.reflect.internal.Symbols$Symbol.isOverridingSymbol(Symbols.scala:2499)
+	scala.reflect.internal.Symbols$Symbol.nextOverriddenSymbol(Symbols.scala:2513)
+	scala.tools.nsc.typechecker.Namers$Namer.safeNextOverriddenSymbol(Namers.scala:1819)
+	scala.tools.nsc.typechecker.Namers$Namer.computeOverridden$1(Namers.scala:1827)
+	scala.tools.nsc.typechecker.Namers$Namer.methodSig(Namers.scala:1420)
+	scala.tools.nsc.typechecker.Namers$Namer.memberSig(Namers.scala:1975)
+	scala.tools.nsc.typechecker.Namers$Namer.typeSig(Namers.scala:1926)
+	scala.tools.nsc.typechecker.Namers$Namer$MonoTypeCompleter.completeImpl(Namers.scala:874)
+	scala.tools.nsc.typechecker.Namers$LockingTypeCompleter.complete(Namers.scala:2123)
+	scala.tools.nsc.typechecker.Namers$LockingTypeCompleter.complete$(Namers.scala:2121)
+	scala.tools.nsc.typechecker.Namers$TypeCompleterBase.complete(Namers.scala:2116)
+	scala.reflect.internal.Symbols$Symbol.completeInfo(Symbols.scala:1565)
+	scala.reflect.internal.Symbols$Symbol.info(Symbols.scala:1537)
+	scala.reflect.internal.Symbols$Symbol.initialize(Symbols.scala:1726)
+	scala.tools.nsc.typechecker.Typers$Typer.typed1(Typers.scala:5734)
+	scala.tools.nsc.typechecker.Typers$Typer.typed(Typers.scala:6153)
+	scala.tools.nsc.typechecker.Typers$Typer.typedStat$1(Typers.scala:6231)
+	scala.tools.nsc.typechecker.Typers$Typer.$anonfun$typedStats$8(Typers.scala:3470)
+	scala.tools.nsc.typechecker.Typers$Typer.typedStats(Typers.scala:3470)
+	scala.tools.nsc.typechecker.Typers$Typer.typedTemplate(Typers.scala:2089)
+	scala.tools.nsc.typechecker.Typers$Typer.typedClassDef(Typers.scala:1927)
+	scala.tools.nsc.typechecker.Typers$Typer.typed1(Typers.scala:6060)
+	scala.tools.nsc.typechecker.Typers$Typer.typed(Typers.scala:6153)
+	scala.tools.nsc.typechecker.Typers$Typer.typedStat$1(Typers.scala:6231)
+	scala.tools.nsc.typechecker.Typers$Typer.$anonfun$typedStats$8(Typers.scala:3470)
+	scala.tools.nsc.typechecker.Typers$Typer.typedStats(Typers.scala:3470)
+	scala.tools.nsc.typechecker.Typers$Typer.typedPackageDef$1(Typers.scala:5743)
+	scala.tools.nsc.typechecker.Typers$Typer.typed1(Typers.scala:6063)
+	scala.tools.nsc.typechecker.Typers$Typer.typed(Typers.scala:6153)
+	scala.tools.nsc.typechecker.Analyzer$typerFactory$TyperPhase.apply(Analyzer.scala:124)
+	scala.tools.nsc.Global$GlobalPhase.applyPhase(Global.scala:480)
+	scala.tools.nsc.interactive.Global$TyperRun.applyPhase(Global.scala:1370)
+	scala.tools.nsc.interactive.Global$TyperRun.typeCheck(Global.scala:1363)
+	scala.tools.nsc.interactive.Global.typeCheck(Global.scala:680)
+	scala.tools.nsc.interactive.Global.typedTreeAt(Global.scala:829)
+	scala.meta.internal.pc.SignatureHelpProvider.signatureHelp(SignatureHelpProvider.scala:23)
+	scala.meta.internal.pc.ScalaPresentationCompiler.$anonfun$signatureHelp$1(ScalaPresentationCompiler.scala:276)
