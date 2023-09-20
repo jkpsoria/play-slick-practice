@@ -10,6 +10,7 @@ import java.util.UUID
 import models.repo.AccountRepo
 import models.domain.Account
 import scala.concurrent.ExecutionContext
+import views.html.helper.form
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -47,7 +48,26 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents, a
 
   }
 
-  def updateAcc(id: UUID, newEmail: String) = Action.async { implicit request =>
-    accountRepo.updateAcc(id, newEmail).map(_ => Ok)
+  // def updateAcc(id: UUID, newEmail: String) = Action.async { implicit request =>
+  //   accountRepo.updateAcc(id, newEmail).map(_ => Ok)
+  // }
+
+  // def updateAcc(id: UUID, newEmail: String) = Action.async { implicit request =>
+  //   createAccountForm.bindFromRequest().fold(
+  //     formsWithError => {
+  //       Future.successful(BadRequest("Something went wrong."))
+  //     },
+  //     account => {
+  //       accountRepo.updateAcc(id, account.copy(id = id)).map(result => Ok(result.toString))
+  //     }
+  //   )
+    
+  // }
+
+  def updateAcc(ids: UUID) = Action.async { implicit request =>
+    createAccountForm.bindFromRequest().fold(
+      formsWithError => Future.successful(BadRequest),
+      account => accountRepo.updateAccount(ids, account.copy(id = ids)).map(_ => Ok)
+    )
   }
 }

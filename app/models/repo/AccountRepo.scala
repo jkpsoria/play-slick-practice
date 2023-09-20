@@ -14,7 +14,7 @@ trait AccountRepository {
     def findAcc(id: UUID): Future[Option[Account]]
     def getAcc(email: String): Future[Seq[Account]]
     def deleteAcc(id: UUID): Future[Int]
-    def updateAcc(id: UUID, newEmail: String): Future[Int]
+    def updateAccount(id: UUID, newAccount: Account): Future[Int]
 }
 
 @Singleton
@@ -40,7 +40,7 @@ with AccountRepository {
     //override def getAcc(email: String): Future[Seq[Account]] = db.run(accounts.filter(_.email like s"%$email%").result)
     override def getAcc(email: String): Future[Seq[Account]] = db.run(accounts.filter(_.email.like(s"%$email%")).result)
     override def deleteAcc(id: UUID): Future[Int] = db.run(accounts.filter(_.id === id).delete)
-    override def updateAcc(id: UUID, newEmail: String): Future[Int] = db.run(accounts.filter(_.id === id).map(a => a.email).update(newEmail))
+    override def updateAccount(id: UUID, newAccount: Account): Future[Int] = db.run(accounts.filter(_.id === id).update(newAccount))
 
     def getAll(): Future[Seq[Account]] = db.run(accounts.result)
 }
